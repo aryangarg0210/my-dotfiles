@@ -17,10 +17,23 @@
 # zoxide last on purpose, but oh-my-zsh plugins still touch hooks.
 export _ZO_DOCTOR=0
 
-command -v fzf >/dev/null 2>&1 && source <(fzf --zsh)
+# ── Prompt ────────────────────────────────────────────────────────────
+# ML4W's 20-customization already initializes oh-my-posh. This file is
+# sourced after it (via ~/.zshrc_custom), so whatever runs here wins.
+#
+# Set ZSH_PROMPT=ohmyposh to keep ML4W's prompt instead of starship.
+: "${ZSH_PROMPT:=starship}"
 
-# starship: prompt (overrides any framework theme if installed)
-command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
+if [[ "$ZSH_PROMPT" == "starship" ]] && command -v starship >/dev/null 2>&1; then
+    eval "$(starship init zsh)"
+fi
+
+# ── fzf ───────────────────────────────────────────────────────────────
+# ML4W also sources `fzf --zsh`. Only init if its widgets are absent, so
+# this is a no-op under ML4W and still works on a bare system.
+if command -v fzf >/dev/null 2>&1 && ! (( ${+widgets[fzf-history-widget]} )); then
+    source <(fzf --zsh)
+fi
 
 # atuin: searchable, sync-capable shell history. Replaces Ctrl-R.
 command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh)"
