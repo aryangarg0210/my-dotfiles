@@ -283,7 +283,7 @@
 	"format-icons": [
 		"󰤯", "󰤟", "󰤢", "󰤥", "󰤨"
 	],
-	"on-click": "networkmanager_dmenu",
+	"on-click": "ghostty --class=com.ghostty.WiFi -e ~/.config/hypr/scripts/WifiConnect.sh",
 	"on-click-right": "nm-connection-editor"
 },
 

@@ -196,3 +196,10 @@ command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh)"
 
 # zoxide: smarter cd — keep absolute last
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
+
+# pnpm global bin config
+export PNPM_HOME="$HOME/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac

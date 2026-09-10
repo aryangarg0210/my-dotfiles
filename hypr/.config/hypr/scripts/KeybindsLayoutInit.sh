@@ -4,11 +4,14 @@
 # This avoids double-actions when layouts change.
 
 set -euo pipefail
+# Hyprland parser compatibility (legacy .conf vs lua) - see hypr-compat.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/hypr-compat.sh"
+
 
 # Always reset and bind SUPER+J/K the same way on startup
-hyprctl keyword unbind SUPER,J || true
-hyprctl keyword unbind SUPER,K || true
+hypr_unbind "SUPER,J" "SUPER + J" || true
+hypr_unbind "SUPER,K" "SUPER + K" || true
 
 # Cycle windows globally: J = next, K = previous
-hyprctl keyword bind SUPER,J,cyclenext
-hyprctl keyword bind SUPER,K,cyclenext,prev
+hypr_bind "SUPER,J,cyclenext" 'hl.bind("SUPER + J", hl.dsp.window.cycle_next())'
+hypr_bind "SUPER,K,cyclenext,prev" 'hl.bind("SUPER + K", hl.dsp.window.cycle_next({ next = false }))'

@@ -4,20 +4,25 @@
 
 notif="$HOME/.config/swaync/images/ja.png"
 SCRIPTSDIR="$HOME/.config/hypr/scripts"
+# Hyprland parser compatibility (legacy .conf vs lua) - see hypr-compat.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/hypr-compat.sh"
+
 
 
 HYPRGAMEMODE=$(hyprctl getoption animations:enabled | awk 'NR==1{print $2}')
 if [ "$HYPRGAMEMODE" = 1 ] ; then
-    hyprctl --batch "\
-        keyword animations:enabled 0;\
-        keyword decoration:shadow:enabled 0;\
-        keyword decoration:blur:enabled 0;\
-        keyword general:gaps_in 0;\
-        keyword general:gaps_out 0;\
-        keyword general:border_size 1;\
-        keyword decoration:rounding 0"
+    # (was a single `hyprctl --batch`; batching mixes parsers badly, so these
+    #  go through the compat helper one at a time)
+    hypr_set animations:enabled 0
+    hypr_set decoration:shadow:enabled 0
+    hypr_set decoration:blur:enabled 0
+    hypr_set general:gaps_in 0
+    hypr_set general:gaps_out 0
+    hypr_set general:border_size 1
+    hypr_set decoration:rounding 0
 	
-	hyprctl keyword windowrule "opacity 1 override 1 override 1 override, match:class ^(.*)$"
+	hypr_window_rule "opacity 1 override 1 override 1 override, match:class ^(.*)$" \
+		'hl.window_rule({ match = { class = "^(.*)$" }, opacity = "1 override 1 override 1 override" })'
     awww kill 
     notify-send -e -u low -i "$notif" " Gamemode:" " enabled"
     sleep 0.1

@@ -6,6 +6,9 @@
 # source https://github.com/hyprwm/Hyprland/discussions/4283?sort=new#discussioncomment-8648109
 
 set -euo pipefail
+# Hyprland parser compatibility (legacy .conf vs lua) - see hypr-compat.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/hypr-compat.sh"
+
 
 notif="$HOME/.config/swaync/images/ja.png"
 laptops_conf="$HOME/.config/hypr/UserConfigs/Laptops.conf"
@@ -33,13 +36,13 @@ status_file="${XDG_RUNTIME_DIR:-/tmp}/touchpad.status"
 enable_touchpad() {
     printf "true" >"$status_file"
     notify-send -u low -i "$notif" " Enabling" " touchpad"
-    hyprctl keyword "$touchpad_keyword" true -r
+    hypr_device_enabled "$touchpad_device" true
 }
 
 disable_touchpad() {
     printf "false" >"$status_file"
     notify-send -u low -i "$notif" " Disabling" " touchpad"
-    hyprctl keyword "$touchpad_keyword" false -r
+    hypr_device_enabled "$touchpad_device" false
 }
 
 current_state="false"
