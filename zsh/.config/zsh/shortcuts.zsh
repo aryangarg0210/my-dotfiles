@@ -175,9 +175,24 @@ export FZF_TMUX_OPTS=" -p90%,70% "
 
 # ──────────────────────────────────────────────────────────────
 # Login greeting
+#
+# Only in interactive shells, and only when the fastfetch config it
+# names actually exists — checking for the binary alone is not enough,
+# since `fastfetch -c missing.jsonc` errors out. Falls back to bare
+# fastfetch, then to silence.
 # ──────────────────────────────────────────────────────────────
-if command -v pokemon-colorscripts >/dev/null 2>&1; then
-    pokemon-colorscripts --no-title -s -r | fastfetch -c $HOME/.config/fastfetch/config-pokemon.jsonc --logo-type file-raw --logo-height 10 --logo-width 5 --logo -
-elif command -v fastfetch >/dev/null 2>&1; then
-    fastfetch -c $HOME/.config/fastfetch/config-compact.jsonc
+if [[ -o interactive ]] && command -v fastfetch >/dev/null 2>&1; then
+    _ff_cfg_pokemon="$HOME/.config/fastfetch/config-pokemon.jsonc"
+    _ff_cfg_compact="$HOME/.config/fastfetch/config-compact.jsonc"
+
+    if command -v pokemon-colorscripts >/dev/null 2>&1 && [ -f "$_ff_cfg_pokemon" ]; then
+        pokemon-colorscripts --no-title -s -r \
+          | fastfetch -c "$_ff_cfg_pokemon" --logo-type file-raw \
+                      --logo-height 10 --logo-width 5 --logo -
+    elif [ -f "$_ff_cfg_compact" ]; then
+        fastfetch -c "$_ff_cfg_compact"
+    else
+        fastfetch
+    fi
+    unset _ff_cfg_pokemon _ff_cfg_compact
 fi

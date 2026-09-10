@@ -1,0 +1,12 @@
+# stow's default ignore list anchors ^/README.* to the STOW ROOT, not to
+# package roots, so a package-level README.md would be deployed into $HOME.
+# Defining this file replaces the default list for this package, so the
+# usual VCS/backup patterns are repeated here.
+^/README.*
+^/LICENSE.*
+^/COPYING
+\.git
+\.gitignore
+\.gitmodules
+.+~
+\#.*\#
