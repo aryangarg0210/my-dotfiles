@@ -1,0 +1,184 @@
+# Phase 4 — package removal candidates
+# Generated 2026-09-10, after ML4W 2.15.1 install.
+#
+# State at generation: 241 explicit / 1433 total installed, 32 orphans.
+#
+# MECHANISM CHANGE from the original design: the spec called for marking
+# everything --asdeps, pinning a keep-list, then sweeping orphans. ML4W now
+# owns ~100 explicit packages, so that approach would require enumerating its
+# entire dependency set perfectly — one miss breaks the fresh install. This is
+# an explicit remove-list instead: name what goes, then sweep only what those
+# leave orphaned. A mistake costs one package, not the desktop.
+#
+# Every group below was checked with `pactree -r` for reverse dependencies.
+# Groups are applied individually so any one can be skipped.
+#
+# ══════════════════════════════════════════════════════════════════════
+# DECISIONS — 2026-09-10. Executed by phase4-purge.sh.
+#
+#   REMOVE  safe-cruft, wrong-hardware, xorg-leftovers   (~2.6 GiB)
+#   REMOVE  ollama, virtualbox                           (~296 MiB)
+#   KEEP    dev-infra      — work toolchain
+#   KEEP    heavy-apps     — evidence of active use: 12 .tex files and
+#                            pdflatex for texlive, 15 office documents for
+#                            libreoffice, ~/Android at 8.2 GiB for
+#                            android-studio, a 381 MiB wine prefix
+#   KEEP    extra-browsers, ai-editors, spotify-stack
+#   KEEP    nvidia-stack   — required for the Hybrid switch below
+#
+# GPU: switching Integrated -> Hybrid. Integrated removes the dGPU from
+# the PCI bus, so it cannot wake on demand; Hybrid keeps it present and
+# runtime-suspended, reachable through prime-run. This gives back some of
+# the June battery saving — measure with measure-battery.sh on battery,
+# under the same power profile, before and after.
+#
+# Net effect: ~2.9 GiB, not the wholesale reset originally scoped. The
+# "no previous packages" goal was deliberately traded away in favour of
+# keeping a working toolchain.
+#
+# CAVEAT on the usage evidence: ML4W installed localsearch (a file
+# indexer) as a nautilus dependency, and the filesystem mounts relatime,
+# so access times are unreliable. The file counts are the sound signal;
+# atimes are not.
+# ══════════════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════════════
+# GROUP: safe-cruft          ~2.5 GiB      required by: nothing
+# Debug packages yay generates alongside AUR builds, plus existing orphans.
+# asusctl-debug is additionally stale — 6.3.8 against asusctl 6.4.0.
+# ══════════════════════════════════════════════════════════════════════
+asusctl-debug
+64gram-desktop-bin-debug
+clipse-debug
+k6-debug
+kind-bin-debug
+litehtml0.9-debug
+overskride-debug
+spicetify-cli-debug
+wallust-debug
+yay-debug
+# plus: pacman -Qdtq  (32 orphans, ~2.09 GiB)
+
+# ══════════════════════════════════════════════════════════════════════
+# GROUP: wrong-hardware      ~109 MiB      required by: nothing
+# Drivers for hardware this machine does not have. It is AMD Renoir iGPU
+# + NVIDIA RTX 3050 Mobile — there is no Intel GPU, and nouveau is unused
+# because the NVIDIA card runs nvidia-open-dkms (when enabled at all).
+# ══════════════════════════════════════════════════════════════════════
+intel-media-driver
+libva-intel-driver
+vulkan-intel
+xf86-video-nouveau
+vulkan-nouveau
+
+# ══════════════════════════════════════════════════════════════════════
+# GROUP: xorg-leftovers      ~5 MiB        required by: nothing
+# Pure-Wayland session. XWayland is a SEPARATE package (xorg-xwayland
+# 24.1.13, installed and running) so X app support is unaffected.
+#
+# NOT INCLUDED: xorg-server. It is required by sddm, the active display
+# manager — pacman refuses the removal outright. Keep both.
+# ══════════════════════════════════════════════════════════════════════
+xorg-xinit
+xf86-video-amdgpu
+xf86-video-ati
+
+# ══════════════════════════════════════════════════════════════════════
+# GROUP: nvidia-stack        ~134 MiB      DECISION REQUIRED
+# Unused while supergfxctl is Integrated (0 nvidia modules loaded). Keeping
+# it costs a dkms rebuild on every kernel update; dropping it means
+# switching back to Hybrid later needs a reinstall + reboot.
+# ══════════════════════════════════════════════════════════════════════
+nvidia-open-dkms
+nvidia-settings
+libva-nvidia-driver
+
+# ══════════════════════════════════════════════════════════════════════
+# GROUP: heavy-apps          ~5.3 GiB      DECISION REQUIRED
+# ══════════════════════════════════════════════════════════════════════
+android-studio            # 3.47 GiB  (plus ~/Android is 8.2 GiB, separate)
+texlive-basic             # texlive + biber = 483 MiB total
+texlive-bibtexextra
+texlive-binextra
+texlive-fontsrecommended
+texlive-fontutils
+texlive-latex
+texlive-latexextra
+biber
+libreoffice-fresh         # 423 MiB
+wine                      # wine + winetricks = 600 MiB
+winetricks
+virtualbox                # 229 MiB
+virtualbox-host-dkms
+obs-studio                # obs + obsidian = 50 MiB
+obsidian
+ollama                    # 67 MiB
+
+# ══════════════════════════════════════════════════════════════════════
+# GROUP: extra-browsers      ~900 MiB      DECISION REQUIRED
+# zen-browser-bin is an explicit keeper and stays.
+# firefox (296 MiB) was installed BY ML4W and is what pywalfox themes.
+# ══════════════════════════════════════════════════════════════════════
+brave-bin
+google-chrome
+
+# ══════════════════════════════════════════════════════════════════════
+# GROUP: ai-editors          ~1.06 GiB     DECISION REQUIRED
+# visual-studio-code-bin is an explicit keeper and stays.
+# ══════════════════════════════════════════════════════════════════════
+cursor-bin
+antigravity
+antigravity-cli
+
+# ══════════════════════════════════════════════════════════════════════
+# GROUP: spotify-stack       ~385 MiB      DECISION REQUIRED
+# Note: several zsh shortcuts depend on yt-dlp (dmu, vres), which is NOT
+# in this group and stays.
+# ══════════════════════════════════════════════════════════════════════
+spotify
+spicetify-cli
+spotdl
+python-spotapi
+python-spotipy
+python-spotipyfree
+python-syncedlyrics
+python-bandcamp-api
+python-soundcloud-v2
+
+# ══════════════════════════════════════════════════════════════════════
+# GROUP: dev-infra           ~920 MiB      DECISION REQUIRED — ASK FIRST
+# This looks like work tooling. Do not remove without confirmation.
+# ══════════════════════════════════════════════════════════════════════
+docker
+docker-compose
+minikube
+kind-bin
+k6
+aws-cli-v2
+cloudflared
+jdk17-openjdk
+mercurial
+
+# ══════════════════════════════════════════════════════════════════════
+# MUST KEEP — never remove. Boot, network, audio, hardware, and the
+# tools the zsh shortcuts actually invoke.
+# ══════════════════════════════════════════════════════════════════════
+# boot:      base base-devel linux linux-lts linux-headers linux-lts-headers
+#            linux-firmware amd-ucode mkinitcpio grub grub-btrfs efibootmgr
+#            btrfs-progs systemd sudo openssh zram-generator
+# snapshots: snapper snap-pac inotify-tools
+# display:   sddm xorg-server xorg-xwayland
+# network:   networkmanager network-manager-applet wpa_supplicant
+# bluetooth: bluez bluez-utils blueman
+# audio:     pipewire pipewire-alsa pipewire-jack pipewire-pulse wireplumber
+#            gst-plugin-pipewire sof-firmware pamixer pavucontrol playerctl
+# ASUS:      asusctl supergfxctl rog-control-center power-profiles-daemon keyd
+# graphics:  mesa vulkan-radeon libva-mesa-driver brightnessctl
+# keepers:   visual-studio-code-bin neovim zen-browser-bin zsh zsh-completions
+# shortcuts: git github-cli stow tmux starship zoxide fzf fd bat eza yazi
+#            lazygit atuin ghostty yt-dlp tealdeer fastfetch
+#            pokemon-colorscripts-git
+# ML4W:      everything it installed — hyprland hypridle hyprlock hyprpaper
+#            hyprpicker hyprsunset hyprshutdown quickshell matugen waybar
+#            rofi swaync wlogout nwg-displays nwg-look awww uwsm udiskie
+#            polkit-gnome xdg-desktop-portal-hyprland cliphist
