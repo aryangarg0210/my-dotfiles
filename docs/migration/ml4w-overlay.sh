@@ -92,7 +92,39 @@ ZC
 fi
 [[ -L "$HOME/.config/zsh" ]] || warn "~/.config/zsh is not stowed — run: stow -t ~ zsh"
 
-# ── 4. verify ────────────────────────────────────────────────────────
+# ── 4. ASUS tray autostart ───────────────────────────────────────────
+# conf/autostart.lua is NOT in restore[], so an ML4W update overwrites it
+# and the tray silently disappears. Re-inserted inside ML4W's existing
+# hl.on("hyprland.start") block — a second handler for the same event is
+# unproven in this Hyprland version, so we reuse the block that works.
+#
+# A systemd user service was the first instinct and is wrong here:
+# graphical-session.target is inactive on this setup (the session is not
+# uwsm-managed), so such a unit would never fire.
+note "ASUS tray autostart"
+AS_FILE="$HOME/.config/hypr/conf/autostart.lua"
+if [[ -f "$AS_FILE" ]]; then
+    if grep -q "my-dotfiles overlay" "$AS_FILE"; then
+        ok "autostart already patched"
+    elif ! grep -q '^end)' "$AS_FILE"; then
+        warn "no closing 'end)' found in autostart.lua — not patching blindly"
+    else
+        last=$(grep -n '^end)' "$AS_FILE" | tail -1 | cut -d: -f1)
+        awk -v L="$last" 'NR==L{
+            print "";
+            print "    -- ── my-dotfiles overlay ──────────────────────────────────────────";
+            print "    -- Re-applied by docs/migration/ml4w-overlay.sh: conf/autostart.lua";
+            print "    -- is NOT in ML4W'\''s restore[] list, so an update overwrites it.";
+            print "    hl.exec_cmd(\"rog-control-center --autostart\")";
+        }1' "$AS_FILE" > "$AS_FILE.tmp" && mv "$AS_FILE.tmp" "$AS_FILE"
+        ok "inserted rog-control-center --autostart"
+    fi
+    command -v rog-control-center >/dev/null || warn "rog-control-center not installed"
+else
+    warn "$AS_FILE not found"
+fi
+
+# ── 5. verify ────────────────────────────────────────────────────────
 note "verify"
 if command -v Hyprland >/dev/null; then
     if Hyprland --verify-config 2>&1 | grep -q "config ok"; then
